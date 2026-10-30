@@ -1,0 +1,1 @@
+"""NextGen Code Explorer package."""

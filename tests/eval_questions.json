@@ -1,0 +1,86 @@
+[
+  {
+    "question": "where is user login handled?",
+    "expected_files": ["auth/login.py", "api/routes.py"],
+    "expected_symbols": ["login_user", "handle_login"],
+    "notes": "Authentication handler for user credentials verification"
+  },
+  {
+    "question": "how are jwt access tokens generated and signed?",
+    "expected_files": ["auth/tokens.py"],
+    "expected_symbols": ["create_access_token"],
+    "notes": "JWT session token generation with HS256 signature and expiration claims"
+  },
+  {
+    "question": "where is password hashing and verification implemented?",
+    "expected_files": ["utils/crypto.py", "auth/models.py"],
+    "expected_symbols": ["hash_password", "verify_password_hash"],
+    "notes": "SHA-256 salted password hashing and timing-safe comparison"
+  },
+  {
+    "question": "how is credit card validation done?",
+    "expected_files": ["utils/validators.py"],
+    "expected_symbols": ["validate_card_number"],
+    "notes": "Luhn checksum algorithm for credit card number validation"
+  },
+  {
+    "question": "where are stripe charges and payments processed?",
+    "expected_files": ["payments/stripe_client.py", "api/routes.py"],
+    "expected_symbols": ["create_charge", "StripePaymentGateway", "handle_checkout"],
+    "notes": "Stripe payment gateway charge creation and API integration"
+  },
+  {
+    "question": "how are refund eligibility and return requests handled?",
+    "expected_files": ["payments/refund.py"],
+    "expected_symbols": ["process_refund", "is_eligible_for_refund"],
+    "notes": "30-day refund window check and refund audit log"
+  },
+  {
+    "question": "how is inventory stock checked and reserved for an order?",
+    "expected_files": ["products/inventory.py"],
+    "expected_symbols": ["reserve_stock", "check_stock"],
+    "notes": "Warehouse stock level reservation and availability checking"
+  },
+  {
+    "question": "where is discount coupon calculation applied during checkout?",
+    "expected_files": ["payments/checkout.py"],
+    "expected_symbols": ["calculate_order_total", "apply_discount_coupon"],
+    "notes": "Order total calculation with sales tax and coupon discount"
+  },
+  {
+    "question": "where is rate limiting middleware configured?",
+    "expected_files": ["api/middleware.py"],
+    "expected_symbols": ["RateLimiter", "is_allowed"],
+    "notes": "Sliding window rate limiter per client IP"
+  },
+  {
+    "question": "how are welcome emails and purchase receipts sent?",
+    "expected_files": ["notifications/email_sender.py"],
+    "expected_symbols": ["send_welcome_email", "send_order_receipt"],
+    "notes": "Customer notification outbox via SMTP"
+  },
+  {
+    "question": "where is client-side authentication token saved in local storage?",
+    "expected_files": ["frontend/auth.js"],
+    "expected_symbols": ["saveAuthToken", "getAuthToken"],
+    "notes": "Client-side JWT storage in browser localStorage"
+  },
+  {
+    "question": "how does the frontend initiate stripe checkout?",
+    "expected_files": ["frontend/checkout.js"],
+    "expected_symbols": ["initiateCheckout"],
+    "notes": "Client-side checkout API call with bearer token"
+  },
+  {
+    "question": "where is bearer token authentication middleware defined?",
+    "expected_files": ["api/middleware.py"],
+    "expected_symbols": ["authenticate_bearer_token"],
+    "notes": "HTTP Authorization header bearer token extraction and verification"
+  },
+  {
+    "question": "how are mobile push device tokens registered?",
+    "expected_files": ["notifications/push_service.py"],
+    "expected_symbols": ["register_device_token", "send_push_notification"],
+    "notes": "Device token registry and push notification delivery"
+  }
+]

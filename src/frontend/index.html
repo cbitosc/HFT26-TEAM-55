@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brahmaniss — NextGen Code Explorer</title>
+  
+  <!-- Modern Clean Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Highlight.js for Code Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" id="hljs-light" disabled>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-dark">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- Mermaid.js for Dependency Graphs & Query Traces -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
+  <!-- App Stylesheet with Cache Busting -->
+  <link rel="stylesheet" href="/static/styles.css?v=2.1">
+</head>
+<body>
+  <!-- Ambient Cinematic Background Canvas (Techfest Floating Geometric Particles) -->
+  <canvas id="bg-canvas" class="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-icon">✨</div>
+      <div class="logo-text">
+        <h1>Brahmaniss <span class="logo-badge">NextGen</span></h1>
+        <span class="tagline">Grounded Code Discovery &bull; Explainable Verification</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-chips">
+        <span id="chip-ai" class="status-chip chip-neutral" title="Featherless AI status">AI Checking...</span>
+        <span id="chip-semantic" class="status-chip chip-neutral" title="Semantic embedding status">Semantic Checking...</span>
+      </div>
+      <button id="theme-toggle" class="btn-icon" title="Toggle dark / light theme" aria-label="Toggle theme">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    
+    <!-- Step 1: Ingestion Card -->
+    <section class="card upload-card" id="upload-section">
+      <div class="card-header">
+        <h2>1. Ingest Repository</h2>
+        <span class="sub-label">Upload a project ZIP or inspect our verified sample project</span>
+      </div>
+      
+      <div class="upload-dropzone" id="drop-zone">
+        <div class="dropzone-content">
+          <div class="upload-icon">📦</div>
+          <p class="dropzone-text"><strong>Drag & Drop source code ZIP archive here</strong> or click to browse</p>
+          <span class="dropzone-hint">Max 50 MB archive &bull; Excludes node_modules, .git, venv, binaries, minified files</span>
+          <input type="file" id="file-input" accept=".zip" class="hidden-input">
+        </div>
+      </div>
+
+      <div class="upload-actions">
+        <button id="btn-sample-repo" class="btn btn-secondary">
+          <span>🚀</span> Load Sample Project (ShopStream)
+        </button>
+        <span class="actions-divider">or</span>
+        <button id="btn-browse-file" class="btn btn-outline">
+          <span>📁</span> Browse ZIP File
+        </button>
+      </div>
+
+      <!-- Ingestion Progress Area -->
+      <div id="progress-container" class="progress-container hidden">
+        <div class="progress-steps">
+          <span class="step-badge" id="step-extract">1. Extract</span>
+          <span class="step-badge" id="step-scan">2. Scan & Filter</span>
+          <span class="step-badge" id="step-parse">3. AST Parse</span>
+          <span class="step-badge" id="step-index">4. Inverted Index</span>
+          <span class="step-badge" id="step-ready">5. Ready</span>
+        </div>
+        <div class="progress-bar-track">
+          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+        <p id="progress-status-msg" class="progress-status-msg">Starting extraction...</p>
+      </div>
+
+      <!-- Stats Bar (Appears when indexed) -->
+      <div id="stats-container" class="stats-grid hidden">
+        <div class="stat-card">
+          <span class="stat-label">Files Indexed</span>
+          <span id="stat-files-indexed" class="stat-value">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Files Skipped</span>
+          <div class="skipped-row">
+            <span id="stat-files-skipped" class="stat-value">0</span>
+            <button id="btn-toggle-skip-details" class="btn-link" title="View breakdown">Details ▾</button>
+          </div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Functions & Classes</span>
+          <span id="stat-symbols" class="stat-value">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Unique Index Terms</span>
+          <span id="stat-terms" class="stat-value">0</span>
+        </div>
+        <div class="stat-card stat-card-wide">
+          <span class="stat-label">Languages</span>
+          <div id="stat-languages" class="stat-tags"></div>
+        </div>
+      </div>
+
+      <!-- Skipped Files Details Dropdown -->
+      <div id="skipped-details" class="skipped-details hidden">
+        <h4>Excluded Files & Reasons</h4>
+        <ul id="skipped-reasons-list"></ul>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" id="main-tabs">
+      <button class="tab-btn active" data-tab="tab-search">🔍 Search & Results</button>
+      <button class="tab-btn" data-tab="tab-graph">🕸️ Dependency Graph</button>
+      <button class="tab-btn" data-tab="tab-index-explorer">📚 Inverted Index Explorer</button>
+      <button class="tab-btn" data-tab="tab-evaluation">📊 Evaluation Benchmark</button>
+    </nav>
+
+    <!-- TAB 1: Search & Results -->
+    <div id="tab-search" class="tab-content active">
+      
+      <!-- Search Input Section -->
+      <section class="card search-card">
+        <form id="search-form" class="search-form">
+          <div class="search-bar-row">
+            <div class="search-input-wrapper">
+              <span class="search-icon">🔎</span>
+              <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Ask where code is handled, e.g. 'where is login handled?' or 'stripe checkout'..." 
+                autocomplete="off"
+                required
+              >
+              <button type="button" id="search-clear-btn" class="search-clear-btn hidden" title="Clear search">&times;</button>
+            </div>
+            <button type="submit" id="search-submit-btn" class="btn btn-primary">Search</button>
+          </div>
+
+          <!-- Controls Row -->
+          <div class="search-controls-row">
+            <div class="control-group">
+              <label class="control-label">Retrieval Mode:</label>
+              <div class="mode-toggle-group">
+                <button type="button" class="btn-toggle active" id="btn-mode-hybrid" data-mode="hybrid">Hybrid (BM25F + RRF)</button>
+                <button type="button" class="btn-toggle" id="btn-mode-lexical" data-mode="lexical">Lexical Only</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="select-top-k" class="control-label">Top Results:</label>
+              <select id="select-top-k" class="select-input">
+                <option value="5">Top 5</option>
+                <option value="10" selected>Top 10</option>
+                <option value="20">Top 20</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <label for="select-language" class="control-label">Language:</label>
+              <select id="select-language" class="select-input">
+                <option value="">All Languages</option>
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="markdown">Markdown</option>
+              </select>
+            </div>
+
+            <div class="control-group checkbox-group" title="Expand query with technical identifiers using Featherless AI">
+              <label class="checkbox-label">
+                <input type="checkbox" id="check-ai-rewrite">
+                <span>AI Query Expansion</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Example Question Chips -->
+          <div class="query-chips-row">
+            <span class="chips-label">Try example queries:</span>
+            <div id="example-chips" class="chips-wrapper">
+              <button type="button" class="chip">where is login handled?</button>
+              <button type="button" class="chip">how are jwt access tokens generated?</button>
+              <button type="button" class="chip">where are stripe charges and payments processed?</button>
+              <button type="button" class="chip">how is credit card validation done?</button>
+              <button type="button" class="chip">where is rate limiting middleware configured?</button>
+              <button type="button" class="chip">how are customer refunds handled?</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- AI Explanation Section (Purple Grounded Box) -->
+      <section id="ai-explanation-section" class="card ai-card hidden">
+        <div class="ai-header">
+          <div class="ai-badge">
+            <span class="ai-sparkle">✨</span>
+            <span class="ai-badge-text">AI-Generated Explanation</span>
+          </div>
+          <span class="ai-grounding-notice">Grounded strictly in retrieved evidence. Only cites verified [E#] references.</span>
+        </div>
+        <div id="ai-content-body" class="ai-content-body">
+          <div class="spinner-inline hidden" id="ai-spinner"></div>
+          <p id="ai-explanation-text" class="ai-text"></p>
+          <div id="ai-citations-list" class="ai-citations"></div>
+        </div>
+      </section>
+
+      <!-- Query Execution Trace (Mermaid Flowchart) -->
+      <section id="query-trace-section" class="card trace-card hidden">
+        <div class="card-header collapsible-header" id="trace-toggle-header">
+          <div class="header-title-row">
+            <h3>🔬 Query Retrieval Trace</h3>
+            <span class="badge-pill">Real-time Pipeline</span>
+          </div>
+          <span id="trace-toggle-icon">▾</span>
+        </div>
+        <div id="trace-body" class="trace-body">
+          <div id="query-trace-mermaid" class="mermaid-diagram-container"></div>
+        </div>
+      </section>
+
+      <!-- Verified Evidence Results Section (Green Box) -->
+      <section id="results-section" class="results-section hidden">
+        <div class="results-header">
+          <div class="results-header-left">
+            <span class="evidence-badge">🛡️ Verified Source Evidence</span>
+            <span id="results-count-label" class="results-meta">0 results matched</span>
+          </div>
+          <div class="results-header-right">
+            <span class="promise-tag">Never claims without code proof</span>
+          </div>
+        </div>
+
+        <div id="results-list" class="results-list">
+          <!-- Dynamically populated Result Cards -->
+        </div>
+      </section>
+      
+      <!-- Empty / Initial State Notice -->
+      <div id="search-empty-state" class="empty-state">
+        <div class="empty-icon">🔎</div>
+        <h3>No repository indexed yet</h3>
+        <p>Upload a project ZIP file above or click <strong>"Load Sample Project"</strong> to explore code.</p>
+      </div>
+    </div>
+
+    <!-- TAB 2: Dependency Graph -->
+    <div id="tab-graph" class="tab-content">
+      <section class="card graph-card">
+        <div class="card-header">
+          <div>
+            <h2>File-to-File Dependency Graph</h2>
+            <span class="sub-label">Synthesized from parsed internal imports and module references</span>
+          </div>
+          <div class="graph-actions">
+            <button id="btn-refresh-graph" class="btn btn-outline btn-sm">Refresh Graph</button>
+            <button id="btn-reset-graph-focus" class="btn btn-secondary btn-sm hidden">Reset Focus</button>
+          </div>
+        </div>
+
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-color legend-default"></span> Normal File</span>
+          <span class="legend-item"><span class="legend-color legend-hit"></span> Current Search Match</span>
+          <span class="legend-item"><span class="legend-color legend-focus"></span> Focused Node</span>
+        </div>
+
+        <div id="graph-container" class="graph-viewer">
+          <div id="dependency-mermaid" class="mermaid-diagram-container"></div>
+        </div>
+        <p class="graph-help-text">Click on any node in the graph to focus on its direct incoming and outgoing dependencies.</p>
+      </section>
+    </div>
+
+    <!-- TAB 3: Inverted Index Explorer -->
+    <div id="tab-index-explorer" class="tab-content">
+      <section class="card index-explorer-card">
+        <div class="card-header">
+          <div>
+            <h2>Field-Aware Inverted Index Explorer</h2>
+            <span class="sub-label">Inspect internal BM25 postings lists, term frequencies, and document lengths</span>
+          </div>
+        </div>
+
+        <div class="explorer-search-row">
+          <input 
+            type="text" 
+            id="index-term-input" 
+            placeholder="Type a stemmed or raw term (e.g., 'login', 'token', 'refund', 'stripe')..." 
+            class="input-control"
+          >
+          <button id="btn-inspect-term" class="btn btn-primary">Inspect Postings</button>
+        </div>
+
+        <div id="index-term-details" class="term-details-box hidden">
+          <div class="term-metrics-row">
+            <div class="term-metric">
+              <span class="metric-label">Queried Term</span>
+              <span id="metric-term" class="metric-val">-</span>
+            </div>
+            <div class="term-metric">
+              <span class="metric-label">Document Frequency (DF)</span>
+              <span id="metric-df" class="metric-val">0</span>
+            </div>
+            <div class="term-metric">
+              <span class="metric-label">Inverse Document Frequency (IDF)</span>
+              <span id="metric-idf" class="metric-val">-</span>
+            </div>
+          </div>
+
+          <h3>Posting List Entries (Top Matched Chunks)</h3>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Chunk ID</th>
+                  <th>File Path</th>
+                  <th>Symbol</th>
+                  <th>TF</th>
+                  <th>Fields Matched</th>
+                </tr>
+              </thead>
+              <tbody id="postings-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 4: Evaluation Benchmark -->
+    <div id="tab-evaluation" class="tab-content">
+      <section class="card eval-card">
+        <div class="card-header">
+          <div>
+            <h2>Retrieval Accuracy Benchmark</h2>
+            <span class="sub-label">Automated evaluation against 14 verified repository questions</span>
+          </div>
+          <button id="btn-run-eval" class="btn btn-primary btn-sm">Re-run Evaluation</button>
+        </div>
+
+        <div id="eval-metrics-summary" class="eval-metrics-summary">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table eval-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Benchmark Question</th>
+                <th>Hit@1</th>
+                <th>Hit@3</th>
+                <th>Rank</th>
+                <th>Top Result Symbol / Path</th>
+                <th>Expected Location</th>
+              </tr>
+            </thead>
+            <tbody id="eval-table-body">
+              <tr><td colspan="7" class="text-center">Loading evaluation results...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Modal for "Show More Context" (/api/file) -->
+  <div id="context-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="modal-file-path">File Viewer</h3>
+          <span id="modal-line-range" class="modal-badge">Lines 1 - 50</span>
+        </div>
+        <button id="modal-close-btn" class="btn-icon" title="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <pre><code id="modal-code-content" class="code-block"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Application Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
