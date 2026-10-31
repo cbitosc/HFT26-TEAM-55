@@ -1,0 +1,28 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and Editor Directories
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build & Dependency Directories (handled in subdirectories as well)
+node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+
+# Database files
+*.db
+*.sqlite3
+*.sqlite
