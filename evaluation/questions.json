@@ -1,0 +1,52 @@
+[
+  {
+    "question": "How are unsafe archive paths rejected?",
+    "expected_file": "app/services/source_store.py",
+    "expected_symbol": "unpack"
+  },
+  {
+    "question": "Where is the GitHub branch resolved into a commit?",
+    "expected_file": "app/services/source_store.py",
+    "expected_symbol": "github_archive"
+  },
+  {
+    "question": "How are oversized source files skipped?",
+    "expected_file": "app/services/source_store.py",
+    "expected_symbol": "unpack"
+  },
+  {
+    "question": "Where are overlapping source passages stored?",
+    "expected_file": "app/services/source_store.py",
+    "expected_symbol": "ingest"
+  },
+  {
+    "question": "How does search rank code using bm25?",
+    "expected_file": "app/services/source_store.py",
+    "expected_symbol": "search"
+  },
+  {
+    "question": "Where are model evidence IDs validated?",
+    "expected_file": "app/services/explorer_agent.py",
+    "expected_symbol": "validate_output"
+  },
+  {
+    "question": "How is the agent model call budget enforced?",
+    "expected_file": "app/services/explorer_agent.py",
+    "expected_symbol": "Budget"
+  },
+  {
+    "question": "How does the overview get saved to the database?",
+    "expected_file": "app/services/explorer_agent.py",
+    "expected_symbol": "analyze"
+  },
+  {
+    "question": "How are concurrent imports and AI requests prevented?",
+    "expected_file": "app/routers/explorer.py",
+    "expected_symbol": "exclusive"
+  },
+  {
+    "question": "How does folderLayout position repository folders and files?",
+    "expected_file": "app/static/folder-map.js",
+    "expected_symbol": "folderLayout"
+  }
+]
